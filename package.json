@@ -1,0 +1,65 @@
+{
+  "name": "runtime-intent-z",
+  "version": "1.0.0-z",
+  "description": "Intent-first orchestration engine with computed graph and effect pipeline",
+  "license": "MIT",
+  "author": "Delpi.Kye",
+
+  "sideEffects": false,
+
+  "main": "build/index.cjs.js",
+  "module": "build/index.esm.js",
+  "types": "build/index.d.ts",
+
+  "exports": {
+    ".": {
+      "types": "./build/index.d.ts",
+      "import": "./build/index.esm.js",
+      "require": "./build/index.cjs.js"
+    }
+  },
+
+  "files": ["build"],
+
+  "scripts": {
+    "clean": "rimraf build",
+    "build": "rollup -c",
+    "cb": "npm run clean && npm run build",
+    "prepublishOnly": "npm run cb"
+  },
+
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/delpikye-v/runtime-intent.git"
+  },
+
+  "homepage": "https://github.com/delpikye-v/runtime-intent#readme",
+  "bugs": {
+    "url": "https://github.com/delpikye-v/runtime-intent/issues"
+  },
+
+  "keywords": [
+    "intent",
+    "intent-engine",
+    "orchestration",
+    "computed-graph",
+    "state-engine",
+    "side-effects",
+    "async-flow",
+    "architecture",
+    "ddd",
+    "hexagonal"
+  ],
+
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "rimraf": "^5.0.5",
+    "rollup": "^4.9.6",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "typescript": "^5.3.3",
+    "tslib": "^2.6.2"
+  }
+}
