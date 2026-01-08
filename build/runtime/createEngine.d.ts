@@ -1,4 +1,6 @@
-import { Engine } from "./types";
-export declare function createEngine({ name }: {
+import { Engine, EngineLifecycle } from "./types";
+export declare function createEngine<TState extends object>({ name, initialState, lifecycle }: {
     name: string;
-}): Engine;
+    initialState?: TState;
+    lifecycle?: EngineLifecycle<TState>;
+}): Engine<TState>;

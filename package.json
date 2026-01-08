@@ -1,6 +1,6 @@
 {
   "name": "runtime-intent-z",
-  "version": "1.0.0-z",
+  "version": "2.1.0",
   "description": "Intent-first orchestration engine with computed graph and effect pipeline",
   "license": "MIT",
   "author": "Delpi.Kye",

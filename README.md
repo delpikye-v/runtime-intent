@@ -1,4 +1,4 @@
-# 📘 runtime-intent-z
+## 🔀 runtime-intent-z
 
 [![NPM](https://img.shields.io/npm/v/runtime-intent-z.svg)](https://www.npmjs.com/package/runtime-intent-z)
 ![Downloads](https://img.shields.io/npm/dt/runtime-intent-z.svg)
@@ -7,7 +7,7 @@
 
 ---
 
-**runtime-intent-z** is a lightweight **intent-first orchestration engine**.
+**runtime-intent-z** is a lightweight **intent-first orchestration engine** for frontend & headless applications.
 
 - ❌ Not a state manager  
 - ❌ Not an event bus  
@@ -41,7 +41,7 @@ UI / Adapter Layer
  └─ emits intent
       ↓
 Intent Engine (runtime-intent-z)
- ├─ intent handlers
+ ├─ intent handlers (reducers + effects)
  ├─ async orchestration
  ├─ computed graph
  └─ side effects
@@ -53,44 +53,37 @@ Intent Engine (runtime-intent-z)
 ---
 
 ## 📦 Installation
-
-```bash
+```ts
 npm install runtime-intent-z
 ```
-
 ---
 
-## 🚀 Basic Usage (Headless)
+## 🚀 Basic Usage (Headless / No Framework)
 
-### Create Engine
-
+#### Create Engine
 ```ts
-import { createIntentEngine } from "runtime-intent-z"
+import { createEngine } from "runtime-intent-z"
 
-const engine = createIntentEngine({ name: "cart" })
+const engine = createEngine({ name: "cart" })
+
 ```
 
-### Define Intent
-
+#### Define Intent
 ```ts
-// cart/addItem.ts
-export function registerCartAddItem(engine) {
-  engine.intent("cart.addItem", {
-    reducer(state, item) {
-      return {
-        ...state,
-        cart: {
-          items: [...(state.cart?.items ?? []), item]
-        }
+engine.intent("cart.addItem", {
+  reducer(state, item: { price: number }) {
+    return {
+      ...state,
+      cart: {
+        items: [...(state.cart?.items ?? []), item]
       }
     }
-  })
-}
+  }
+})
 
 ```
 
-### Define Computed
-
+#### Define Computed
 ```ts
 engine.computed("cart.total", {
   deps: ["cart"],
@@ -99,7 +92,7 @@ engine.computed("cart.total", {
   compute({ values }) {
     const items = values.cart?.items ?? []
     return items.reduce(
-      (sum: number, item: any) => sum + item.price,
+      (sum, item) => sum + item.price,
       0
     )
   },
@@ -116,33 +109,46 @@ engine.computed("cart.canCheckout", {
     return values["cart.total"] > 0
   }
 })
+
 ```
 
-### Dispatch
-
+#### Dispatch
 ```ts
 engine.dispatch("cart.addItem", { price: 100 })
 engine.dispatch("cart.addItem", { price: 50 })
 
-engine.getComputed("cart.total")      // 150
-engine.getComputed("cart.canCheckout") // true
-
+engine.getComputed<number>("cart.total")       // 150
+engine.getComputed<boolean>("cart.canCheckout") // true
 ```
 
 ---
 
-## ⚛️ Using with React
+## ⚛️ Using with React (WITHOUT Provider)
+
+#### Engine as Module Singleton
 
 ```ts
-<IntentProvider engine={engine}>
-  <App />
-</IntentProvider>
+// cart.engine.ts
+import { createEngine } from "runtime-intent-z"
+
+export const cartEngine = createEngine({ name: "cart" })
 ```
 
+#### React Component
 ```ts
-function Cart() {
-  const engine = useEngine()
-  const total = useComputed("cart.total")
+import { useEffect, useState } from "react"
+import { cartEngine } from "./cart.engine"
+
+export function Cart() {
+  const [, force] = useState(0)
+
+  useEffect(() => {
+    return cartEngine.subscribe(() => {
+      force(x => x + 1)
+    })
+  }, [])
+
+  const total = cartEngine.getComputed<number>("cart.total")
 
   return (
     <>
@@ -150,7 +156,7 @@ function Cart() {
 
       <button
         onClick={() =>
-          engine.dispatch("cart.addItem", { price: 100 })
+          cartEngine.dispatch("cart.addItem", { price: 100 })
         }
       >
         Add item
@@ -159,10 +165,13 @@ function Cart() {
   )
 }
 ```
+✔ No Provider.  
+✔ No Context.  
+✔ Engine is framework-agnostic.  
+
 ---
 
 ## ⚡ Async Orchestration Example
-
 ```ts
 engine.intent("user.login", {
   effect(_, { engine }) {
@@ -179,31 +188,23 @@ engine.intent("user.login", {
 ```
 
 - No async logic in UI
-- Flow is testable & deterministic
-- Side effects are centralized
+
+- Flow is deterministic
+
+- Easy to test
 
 ---
-
---- 
-
 
 ## 🧩 Multiple Engines
 
 ```ts
-const authEngine = createIntentEngine({ name: "auth" })
-const cartEngine = createIntentEngine({ name: "cart" })
+const authEngine = createEngine({ name: "auth" })
+const cartEngine = createEngine({ name: "cart" })
 ```
-
-Each engine:
-- Has isolated state
-- Has isolated effects
-- Can be mounted in different React trees
-- Can be tested independently
 
 ---
 
-## 🧪 Testing Example
-
+## 🧪 Testing Example (Headless)
 ```ts
 import { createEngine } from "runtime-intent-z"
 
@@ -211,7 +212,7 @@ test("cart.addItem updates total", () => {
   const engine = createEngine({ name: "test" })
 
   engine.intent("add", {
-    reducer(state, n) {
+    reducer(state, n: number) {
       return { total: (state.total ?? 0) + n }
     }
   })
@@ -226,26 +227,20 @@ test("cart.addItem updates total", () => {
   engine.dispatch("add", 5)
   engine.dispatch("add", 10)
 
-  expect(engine.getComputed("total")).toBe(15)
+  expect(engine.getComputed<number>("total")).toBe(15)
 })
+
 ```
-
-- ✔ No React
-- ✔ No DOM
-- ✔ Pure business test
-
----
 
 ## 🔍 Comparison
 
 | Feature        | runtime-intent-z  | Redux       | Event Bus  |
-| -------------- | ----------------  | ----------- | ---------- |
+| -------------- | ----------------  | ----------- | ---------  |
 | Intent-based   | ✅                | ❌           | ❌         |
 | Async built-in | ✅                | ❌           | ❌         |
 | Side effects   | First-class       | Middleware  | Ad-hoc     |
 | Computed graph | ✅                | ❌           | ❌         |
 | Headless test  | ✅                | ⚠️           | ❌         |
-
 
 ---
 
